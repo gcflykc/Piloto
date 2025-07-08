@@ -1,1 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mente Jovem - Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Dashboard - Mente Jovem</h1>
+        <button onclick="firebase.auth().signOut().then(() => window.location.href='login.html')">Sair</button>
+        <h2>Resultados dos Alunos</h2>
+        <div id="results"></div>
+    </div>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+    <script src="script.js"></script>
+    <script>
+        firebase.auth().onAuthStateChanged((user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+            } else {
+                loadResults();
+            }
+        });
 
+        function loadResults() {
+            const resultsDiv = document.getElementById('results');
+            db.collection('quizResults').get().then((snapshot) => {
+                resultsDiv.innerHTML = '';
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    resultsDiv.innerHTML += `
+                        <p>Usuário: ${data.userId}<br>Pontuação: ${data.score}<br>Classificação: ${data.classification}<br>Data: ${new Date(data.timestamp).toLocaleString()}</p>
+                    `;
+                });
+            });
+        }
+    </script>
+</body>
+</html>
