@@ -1,44 +1,60 @@
+// Importa as funções necessárias do Firebase SDK
+import { initializeApp } from 'firebase/app';
+import { getAuth, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { getFirestore, collection, addDoc } from 'firebase/firestore';
+
 // Configuração do Firebase
 const firebaseConfig = {
-    apiKey: "SUA_API_KEY",
-    authDomain: "SEU_PROJETO.firebaseapp.com",
-    projectId: "SEU_PROJETO",
-    storageBucket: "SEU_PROJETO.appspot.com",
-    messagingSenderId: "SEU_SENDER_ID",
-    appId: "SUA_APP_ID"
+    apiKey: "AIzaSyDENL8dcmEoJNweSkoaZEssxZ0Ud7McSP8",
+    authDomain: "mvp-mentejovem.firebaseapp.com",
+    projectId: "mvp-mentejovem",
+    storageBucket: "mvp-mentejovem.firebasestorage.app",
+    messagingSenderId: "960533273556",
+    appId: "1:960533273556:web:ecfe6c7e841b56b8151441",
+    measurementId: "G-3S4SD8LK6V"
 };
 
 // Inicializa o Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 // Função para salvar o resultado do quiz no Firestore
-function saveResultToFirebase(score, classification) {
-    const user = firebase.auth().currentUser;
+export async function saveResultToFirebase(score, classification) {
+    const user = auth.currentUser;
     if (user) {
-        db.collection('quizResults').add({
-            userId: user.uid,
-            score: score,
-            classification: classification,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        }).then(() => {
+        try {
+            await addDoc(collection(db, 'quizResults'), {
+                userId: user.uid,
+                score: score,
+                classification: classification,
+                timestamp: new Date()
+            });
             console.log('Resultado salvo com sucesso!');
-        }).catch((error) => {
+        } catch (error) {
             console.error('Erro ao salvar resultado:', error);
-        });
+            throw error;
+        }
+    } else {
+        throw new Error('Usuário não autenticado');
     }
 }
 
 // Autenticação no login
-document.getElementById('loginForm')?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    firebase.auth().signInWithEmailAndPassword(email, password)
-        .then(() => {
+const loginForm = document.getElementById('loginForm');
+if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
             window.location.href = 'dashboard.html';
-        })
-        .catch((error) => {
+        } catch (error) {
             document.getElementById('errorMessage').textContent = 'Erro: ' + error.message;
-        });
-});
+        }
+    });
+}
+
+// Exporta auth e db para uso em outros arquivos
+export { auth, db };
